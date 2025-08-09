@@ -1,0 +1,578 @@
+////////////////////////////////////////////////////////////////////////
+//NAME     : DULANJITH DMKS
+//REG NO   : EG/2022/5025
+////////////////////////////////////////////////////////////////////////
+
+#include <iostream>
+#include <iomanip>//to set pricions in cout
+#include <string>
+#include <algorithm>//to chek if a number
+#include <sstream>//to use isInteger function;
+#include <type_traits>//to chek if a float or not
+
+using namespace std;
+
+//cMatrix3x3 declaration;
+class cMatrix3x3{
+  private:
+    float matrix[3][3]={{1,0,0},{0,1,0},{0,0,1}};//declaring 3x3 2 dimentional array to store elements
+    int m=3,n=3;//matrix dimentions
+  public: char lable;
+  protected:
+    //float *identityptr[3][3]={{1,0,0},{0,1,0},{0,0,1}};
+    //float identity[3][3]={{1,0,0},{0,1,0},{0,0,1}};;
+    //float (*identityptr)[3]=identity;
+    bool isTemp=false;
+    void killwhentemp(bool arg,cMatrix3x3* argMat);
+
+  public:
+//definitions for overloaded operators
+    cMatrix3x3& operator=(const cMatrix3x3& rhs);
+    cMatrix3x3& operator+(const cMatrix3x3& rhs);
+    cMatrix3x3& operator-(const cMatrix3x3& rhs);
+    cMatrix3x3 operator*(cMatrix3x3& rhs);
+// rhs gives a reference to the argument.But rhs can't change the argument
+
+//***constructers***//
+    cMatrix3x3();
+    cMatrix3x3(char argLable);
+    cMatrix3x3(const cMatrix3x3& other);//other is a reference to the given argument;
+    cMatrix3x3(const float argMatrix[3][3]); //hear a matrix has copied as a argument;
+
+
+//overloading << and >> operaters
+//These functions are not belong to this class.These functions are outside functions
+//But thoes function requires private data in this class
+//there for we have to define thoes functions as friend fumctions in this class
+
+// ">>" will take a istream as input para and return thar istream object to the chainning
+friend istream& operator>>(istream& instream,cMatrix3x3& inmatrix);
+friend ostream& operator<<(ostream& outstream,cMatrix3x3& outmatrix);
+friend int findIndex(char letter);
+
+//functions for inverse and transpos
+cMatrix3x3& trpos();//
+cMatrix3x3& inv();
+ void changeRows(int a,int b);
+ float determinent();
+template<typename T>
+friend bool is_float(T);
+
+};
+
+
+//determinent function
+float cMatrix3x3::determinent() {
+    float det = 0.0f;
+
+    // Calculate determinant using the rule of Sarrus
+    det = matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
+          matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
+          matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+
+    return det;
+}
+
+
+cMatrix3x3::cMatrix3x3(){
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            if(i==j)matrix[i][j]=1;
+            else matrix[i][j]=0;
+        }
+    }
+}
+
+cMatrix3x3::cMatrix3x3(char argLable){
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            if(i==j)matrix[i][j]=1;
+            else matrix[i][j]=0;
+        }
+    }
+
+  lable=argLable;
+}
+
+cMatrix3x3::cMatrix3x3(const cMatrix3x3& other){
+        for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            matrix[i][j]=other.matrix[i][j];
+            lable=other.lable;
+        }
+    }
+}
+
+cMatrix3x3::cMatrix3x3(const float inputMatrix[3][3]){
+            for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            matrix[i][j]=inputMatrix[i][j];
+        }
+    }
+
+}
+
+cMatrix3x3& cMatrix3x3::operator=(const cMatrix3x3& rhs){
+    if(this==&rhs) return *this;
+    else{
+        for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            matrix[i][j]=rhs.matrix[i][j];
+        }
+    }
+    return *this;
+    //killwhentemp();
+    }
+}
+
+cMatrix3x3& cMatrix3x3::operator+(const cMatrix3x3& rhs){
+    cMatrix3x3 *sum=new cMatrix3x3;
+        for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            sum->matrix[i][j]=matrix[i][j]+rhs.matrix[i][j];
+        }
+    }
+    return *sum;
+}
+
+cMatrix3x3& cMatrix3x3::operator-(const cMatrix3x3& rhs){
+    cMatrix3x3 *sub=new cMatrix3x3;
+        for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            sub->matrix[i][j]=matrix[i][j]-rhs.matrix[i][j];
+        }
+    }
+    return *sub;
+}
+
+
+//overloaded multiflication
+cMatrix3x3 cMatrix3x3::operator*(cMatrix3x3& rhs) {
+    cMatrix3x3 result; // Create a new matrix to store the result
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            result.matrix[i][j] = 0; // Initialize each element of the result to 0
+            for (int k = 0; k < 3; k++) {
+                result.matrix[i][j] += matrix[i][k] * rhs.matrix[k][j]; // Perform the multiplication
+            }
+        }
+    }
+
+    return result;
+}
+
+
+////////////////////////////////////////////////////////////////////
+
+
+istream& operator>>(istream& instream,cMatrix3x3& inmatrix){
+    char la=inmatrix.lable;
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            cout<<la<<"["<<i+1<<","<<j+1<<"] : ";
+            instream>>inmatrix.matrix[i][j];
+//            if(is_float(inmatrix.matrix[i][j])==false) { cout<<"break";  break;}
+        }
+    }
+
+}
+
+ostream& operator<<(ostream& outstream,cMatrix3x3& outmatrix){
+    cout<<endl;
+for(int i=0;i<3;i++){
+        cout<<"[";
+        for(int j=0;j<3;j++){
+                outstream<<fixed<<setprecision(4)<<outmatrix.matrix[i][j];
+                if(j!=2) cout<<" ";
+        }
+        cout<<"]"<<endl;
+    }
+  cout<<endl;
+}
+
+
+cMatrix3x3& cMatrix3x3::trpos(){
+static cMatrix3x3 result;
+
+ for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            result.matrix[i][j]=matrix[j][i];
+        }
+    }
+  return result;
+}
+
+
+cMatrix3x3& cMatrix3x3::inv(){
+
+cMatrix3x3 *uTrig=new cMatrix3x3();
+
+  int n=3; int m=3;
+  int startrow=1;
+
+    for(int j=0;j<m;j++){
+        for(int i=startrow;i<n;i++){
+            if(matrix[j][j]==0) {changeRows(j,j+1); uTrig->changeRows(j,j+1);}
+            float factor=matrix[i][j]/matrix[j][j];
+            //cout<<"j="<<j<<" "<<"i="<<i<<" factor :"<<factor<<endl;
+            for(int k=0;k<m;k++) matrix[i][k]=matrix[i][k]-matrix[j][k]*factor;
+            for(int k=0;k<m;k++) uTrig->matrix[i][k]=uTrig->matrix[i][k]-uTrig->matrix[j][k]*factor;
+        }
+        startrow++;
+    }
+
+    startrow=n-2;
+
+    for(int j=m-1;j>0;j--){
+       for(int i=startrow;i>=0;i--){
+            if(matrix[j][j]==0) {changeRows(j,j-1); uTrig->changeRows(j,j-1);}
+            float factor=matrix[i][j]/matrix[j][j];
+           //cout<<"j="<<j<<" "<<"i="<<i<<" factor :"<<factor<<endl;
+            for(int k=0;k<m;k++) {matrix[i][k]=matrix[i][k]-matrix[j][k]*factor;}
+            //cout<<"### this "<<"  i="<<i<<"  k="<<k;}
+            for(int k=0;k<m;k++) uTrig->matrix[i][k]=uTrig->matrix[i][k]-uTrig->matrix[j][k]*factor;
+            //cout<<"j="<<j<<" i="<<i<<"Facter "<<factor<<endl;
+         }
+        startrow--;
+    }
+
+
+     for(int i=0;i<n;i++){
+
+        for(int j=0;j<n;j++) uTrig->matrix[i][j]=uTrig->matrix[i][j]/matrix[i][i];
+     }
+   return *uTrig;
+}
+
+//***********Function for row swapping*********************//
+
+ void cMatrix3x3::changeRows(int a,int b){
+     float tempArr[m];
+     for(int i=0;i<m;i++) {
+            tempArr[i]=matrix[a][i];
+            matrix[a][i]=matrix[b][i];
+            }
+
+     for(int i=0;i<m;i++)  matrix[b][i]=tempArr[i];
+ }
+//***********End of row swapping function*********************//
+
+void cMatrix3x3::killwhentemp(bool arg,cMatrix3x3* argMat){
+if(arg==true) delete argMat;
+}
+
+
+//************THis function is for string transformation************//
+//Function to transform string
+void transformString(std::string& str) {
+    // Remove blank spaces
+    str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+
+    // Replace "inv(" with "#"
+    size_t pos = 0;
+    while ((pos = str.find("inv(", pos)) != std::string::npos) {
+        // Replace "inv(" with "#"
+        str.replace(pos, 4, "#");
+        // Remove the following bracket
+        str.erase(pos + 1 + 1, 1);
+        // Move to the next position after replaced part
+        pos++;
+    }
+
+    // Replace "trpos(" with "$"
+    pos = 0;
+    while ((pos = str.find("trpos(", pos)) != std::string::npos) {
+        // Replace "trpos(" with "$"
+        str.replace(pos, 6, "$");
+        // Remove the following bracket
+        str.erase(pos + 1 + 1, 1);
+        // Move to the next position after replaced part
+        pos++;
+    }
+
+    // Remove any remaining ")"
+    str.erase(std::remove(str.begin(), str.end(), ')'), str.end());
+}
+
+//////////////////////////////////////////this func seems working well///////////////////////
+
+////// FUNCTION TO CHEK IF USER INPUT ELEMENTS TO THE MATRIX INT OR NOT;
+// I havent use this.but can be used inside >> operater overloading;
+
+
+template<typename T>
+bool is_float(T) {
+    return std::is_same<T, float>::value;
+}
+///////////////////////////////////////////////////////////////////////
+//function for compare 2 char arrays
+
+bool checkAllElementsExist(char* charptr, int size1, char* labelarr, int size2) {
+    for (int i = 0; i < size1; ++i) {
+        bool found = false;
+
+        for (int j = 0; j < size2; ++j) {
+            if (charptr[i] == labelarr[j]) {
+                found = true;
+                break;
+            }
+        }
+
+        // If any element of charptr is not found in labelarr, return false
+        if (!found) {
+            return false;
+        }
+    }
+
+    // If all elements of charptr are found in labelarr, return true
+    return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////
+
+//////// ********************************** /////////////
+
+cMatrix3x3 Matarrcpy[5];//will contain cpy of user given matrices
+
+int main() {
+
+static bool valid=true;
+bool same=true;
+
+bool wrongtype=false;
+
+//    cMatrix3x3 userinput;
+//    cin>>userinput;
+//    cMatrix3x3 result;
+//    result=userinput.inv();
+//    cout<<result;
+//    return 0;
+
+
+//************* REQUARED VARIABLES *****************//
+cMatrix3x3 Matarr[5];
+string usrReq=" ";
+
+//************* REQUARED VARIABLES OVER *****************//
+
+cout<<"*********************Welcome to the Matrix Calculater*********************"<<endl;
+cout<<"--------------------------------------------------------------------------"<<endl<<endl;
+cout<<"Instructions:"<<endl;
+cout<<"-------------:"<<endl<<endl;
+cout<<"--->First define your matrixes by entering the name of matrix"<<endl;
+cout<<"--->After all the matrix are defined press done and enter"<<endl;
+cout<<"--->After you may do any calculation with predefined matrices"<<endl;
+cout<<"--->You may use trpos() for get the transformation and inv() for the inverse"<<endl;
+cout<<"--->Once you done press quit and enter to end the programme"<<endl;
+
+//******************* LOOP 1 FOR STORING MATRICES**************************//
+static int numofmat=0;
+do{
+
+  //Asking;
+
+    cout<<endl<<endl<<"-->";
+    cin>>usrReq;
+    if(usrReq=="done"){break;}
+    //cout<<endl<<usrReq;
+    //transformString(usrReq);
+    //removeBrackets(usrReq);
+    //once you done adding matrices press done and enter;
+    if((!(usrReq>="A"&&usrReq<="Z"))||usrReq.length()!=1)
+    {
+        cout<<endl<<"Wrong Input.Only use capital letters as the matrix names;";
+        valid=false;
+        continue;
+    }
+
+  //Storing if a Matrix;
+    if(usrReq.length()==1 && usrReq !="q" ){
+        char usrChar=usrReq[0];
+        cMatrix3x3 temp(usrChar);
+        cin>>temp;
+
+        if(wrongtype==true){cout<<"please only enter floats as matrix elements: "; break;}
+        Matarr[numofmat].lable=usrChar;
+        Matarr[numofmat]=temp;
+        numofmat++;
+    }
+    //cout<<"nom"<<numofmat<<endl;
+
+}
+
+while(usrReq !="quit");
+
+//******************* LOOP 2 START FOR ANALYZING MATRICES ARITHMATICS **************************//
+while(usrReq !="quit"){
+        bool existence=true;
+if(usrReq=="done") cout<<"Now you can enter matrix operations..."<<endl;
+transformString(usrReq);
+
+for(int i=0;i<usrReq.length();i++) {
+    if(usrReq.length()==1) valid=false;
+    if(isalpha(usrReq[i])&&isalpha(usrReq[i+1])) valid=false;
+}
+//cout<<endl<<usrReq;
+//creating a copy of matarray to do the calculation becase in previous calc it has changed
+cMatrix3x3 Matarrcpy[numofmat];//will contain cpy of user given matrices
+    for (int i = 0; i<numofmat; i++){
+    Matarrcpy[i] = Matarr[i];
+    }
+    //cout<<"num of mats: "<<numofmat<<endl;
+
+ int nchar=0;
+ int nop=0;
+
+for(int i=0;i<usrReq.length();i++)
+{
+    if(usrReq[i]=='+'||usrReq[i]=='-'||usrReq[i]=='#'||usrReq[i]=='$'||usrReq[i]=='*') nop++;
+    else nchar++;
+}
+
+if(nchar==1) valid=true;
+
+//ALLOCATING MEMORY FOR CHAR AND OP ARRAYS;
+
+char* opptr=new char[nop];
+char* charptr=new char[nchar];
+int* matrixIndexesptr=new int[nchar];
+
+//INDEXES FOR ARRAYS
+int lableindex=0;
+int opindex=0;
+
+//seperating characters for charptr and opptr pointing arrays
+for (int i=0;i<usrReq.length();++i)
+      {
+      char c = usrReq[i]; // Access the character at index i
+      if (isalpha(c)) charptr[lableindex++]=c ;
+      else if (c == '+' || c == '-'||c == '#'|| c == '$'|| c == '*') opptr[opindex++]=c;
+      else
+       {
+       valid = false;
+       break;
+       }
+      }
+
+   char lablearr[nchar];
+   for(int i=0;i<numofmat;i++){
+    lablearr[i]=Matarr[i].lable;
+    //cout<<lablearr[i];
+   }
+
+
+//cheking if unortherized characters existancy...
+   same=checkAllElementsExist(charptr,nchar,lablearr,numofmat);
+  //cout<<same;
+
+
+//last element cannot be a operater
+//if(opptr[nop-1]!='+')
+
+//******** SEPERATING DONE LABELS AND OPERATORS ********//////
+
+//******** GETTING THE INDEX IN Matarr[5] FOR CORESPONDING USER LETTER ******//
+//Assign it to matrixIndexesptr array;
+
+    int k=0;
+    for(int j=0;j<5;j++){
+        for(int i=0;i<5;i++){
+            if(charptr[j]==Matarr[i].lable){
+            matrixIndexesptr[k]=i; k++; break;
+            }
+            //else{valid=false;}
+        }
+    }
+
+
+   // cout<<matrixIndexesptr[0];
+   //cout<<matrixIndexesptr[1];
+   // cout<<matrixIndexesptr[2];
+
+   //cheking if uninputted matrices are exist in operations
+
+
+
+//******** GETTING THE INDEX DONE IN Matarr[5] FOR CORESPONDING USER LETTER ******//
+
+
+////********** CALCULATING THE RESULT USING "matrixIndexes" ARRAY AND op ARRAY *******////
+
+
+//*******FUNCTION CALLING ITERATING CALCULATION****
+cMatrix3x3* resultPtr =new cMatrix3x3();//to assign the result
+
+//first repacing matarrcpy with corresponding inv and trposes
+//if(opptr[0]=='#') Matarrcpy[matrixIndexesptr[0]]=Matarrcpy[matrixIndexesptr[0]].inv();
+
+
+
+
+for(int i=0,j=0;i<nop;i++){
+
+    if(opptr[i]=='+'||opptr[i]=='-'||opptr[i]=='*') j++;
+
+    else if(opptr[i]=='#'){
+             if(Matarrcpy[matrixIndexesptr[j]].determinent()==0) {existence=false; break;}
+            Matarrcpy[matrixIndexesptr[j]]=Matarrcpy[matrixIndexesptr[j]].inv();
+        //cout<<endl<<"#j"<<j<<Matarrcpy[matrixIndexesptr[j]];
+    }
+
+     else if(opptr[i]=='$'){Matarrcpy[matrixIndexesptr[j]]=Matarrcpy[matrixIndexesptr[j]].trpos();
+        //cout<<endl<<"$j"<<j<<Matarrcpy[matrixIndexesptr[j]];
+    }
+
+}
+
+if(opptr[0]=='#'||opptr[0]=='$') *resultPtr=Matarrcpy[matrixIndexesptr[0]];
+else  *resultPtr=Matarr[matrixIndexesptr[0]];
+
+for(int i=0,j=-1;i<nop;i++){
+    if(opptr[i]=='+'||opptr[i]=='-'||opptr[i]=='*') {
+            j++;
+
+    if(opptr[i]=='+'){
+       if(opptr[i+1]=='#'||opptr[i+1]=='$') *resultPtr = *resultPtr + Matarrcpy[matrixIndexesptr[j+1]];
+       else *resultPtr = *resultPtr + Matarr[matrixIndexesptr[j+1]];
+
+         //cout<<*resultPtr<<endl;
+    }
+    else if(opptr[i]=='-'){
+        if(opptr[i+1]=='#'||opptr[i+1]=='$') *resultPtr = *resultPtr - Matarrcpy[matrixIndexesptr[j+1]];
+        else *resultPtr = *resultPtr - Matarr[matrixIndexesptr[j+1]];
+    }
+    else if(opptr[i]=='*') {
+        if(opptr[i+1]=='#'||opptr[i+1]=='$') *resultPtr = (*resultPtr) * (Matarrcpy[matrixIndexesptr[j+1]]);
+        else  *resultPtr = (*resultPtr) * (Matarr[matrixIndexesptr[j+1]]);
+    }
+
+    }
+}
+
+//**FUNCTION CALLED FOR ITERATING CALCULATION**//
+if(valid==true&&same==true&&existence==true) cout<<endl<<*resultPtr;
+else if(valid==false&&usrReq!="done") cout<<endl<<"Wrong input.Please try again...";
+else if(same==false&&usrReq!="done")  cout<<endl<<"You have entered undefined matrix.Please try again...";
+else if(existence==false) cout<<endl<<"Inverse can not found..!";
+
+
+//cout<<endl<<"matarr0"<<Matarrcpy[0]<<endl;
+//cout<<endl<<"matarr1"<<Matarrcpy[1]<<endl;
+//cout<<endl<<"matarr1"<<Matarrcpy[2]<<endl;
+//cout<<Matarrcpy[1]<<endl;
+
+////******************** CALCULATION DONE *********************////
+
+//////*******************ANALYZING OF AN EXPRESSION IS DONE*************/////////
+//delete resultPtr;
+//delete charptr;
+//delete matrixIndexesptr;
+//delete opptr;
+cout<<endl<<endl<<"-->";
+cin>>usrReq;
+valid=true;
+}
+//******************* LOOP 2 END FOR ANALYZING MATRICES ARITHMATICS **************************//
+}
